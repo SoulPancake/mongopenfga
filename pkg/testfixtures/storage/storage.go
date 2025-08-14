@@ -1,65 +1,73 @@
+// Package storage contains containers that can be used to test all available data stores.
 package storage
 
 import (
 	"testing"
-
-	"github.com/openfga/openfga/storage"
-	"github.com/stretchr/testify/require"
 )
 
-// InitFunc initializes a datastore instance from a uri that has been
-// generated from a TestStorageBuilder
-type InitFunc[T any] func(engine, uri string) T
+// DatastoreTestContainer represents a runnable container for testing specific datastore engines.
+type DatastoreTestContainer interface {
 
-// RunningEngineForTest represents an instance of a database engine running with its backing
-// database/service, expressly for testing.
-type RunningEngineForTest[T any] interface {
+	// GetConnectionURI returns a connection string to the datastore instance running inside
+	// the container.
+	GetConnectionURI(includeCredentials bool) string
 
-	// NewDatabase returns the connection string to a new initialized logical database,
-	// but one that is not migrated.
-	NewDatabase(t testing.TB) string
+	// GetDatabaseSchemaVersion returns the last migration applied (e.g. 3) when the container was created
+	GetDatabaseSchemaVersion() int64
 
-	// NewDatastore returns a new logical datastore initialized with the
-	// initFunc. For example, the sql based stores will create a new logical
-	// database in the database instance, migrate it and provide the URI for it
-	// to initFunc
-	NewDatastore(t testing.TB, initFunc InitFunc[T]) T
+	GetUsername() string
+	GetPassword() string
+
+	// CreateSecondary creates a secondary datastore if supported.
+	// Returns an error if the operation fails or if the datastore doesn't support secondary datastores.
+	CreateSecondary(t testing.TB) error
+
+	// GetSecondaryConnectionURI returns the connection URI for the secondary datastore if one exists.
+	// Returns an empty string if no secondary datastore exists.
+	GetSecondaryConnectionURI(includeCredentials bool) string
 }
 
-type DatastoreTestEngine[T any] struct{}
+type memoryTestContainer struct{}
 
-func NewDatastoreTestEngine[T any]() *DatastoreTestEngine[T] {
-	return &DatastoreTestEngine[T]{}
+func (m memoryTestContainer) GetConnectionURI(includeCredentials bool) string {
+	return ""
 }
 
-// RunDatastoreTestEngine starts the backing database or service necessary for the given engine
-// for testing and sets the defaults for that database or service. Note that this does *NOT*
-// create the logical database nor call migrate; callers can do so via NewDatabase and NewDatastore
-// respectively. Note also that the backing database or service will be shutdown automatically via
-// the Cleanup of the testing object.
-func (d *DatastoreTestEngine[T]) RunDatastoreTestEngine(t testing.TB, engine string) RunningEngineForTest[T] {
-	return d.RunDatastoreTestEngineWithBridge(t, engine, "")
+func (m memoryTestContainer) GetUsername() string {
+	return ""
 }
 
-// RunDatastoreTestEngineWithBridge runs a datastore engine on a specific bridge. If a bridge is
-// specified, then the hostnames returned by the engines are those to be called from another
-// container on the bridge.
-func (d *DatastoreTestEngine[T]) RunDatastoreTestEngineWithBridge(t testing.TB, engine, bridgeNetworkName string) RunningEngineForTest[T] {
+func (m memoryTestContainer) GetPassword() string {
+	return ""
+}
+
+func (m memoryTestContainer) GetDatabaseSchemaVersion() int64 {
+	return 1
+}
+
+func (m memoryTestContainer) CreateSecondary(t testing.TB) error {
+	return nil
+}
+
+func (m memoryTestContainer) GetSecondaryConnectionURI(includeCredentials bool) string {
+	return ""
+}
+
+// RunDatastoreTestContainer constructs and runs a specific DatastoreTestContainer for the provided
+// datastore engine. If applicable, it also runs all existing database migrations.
+// The resources used by the test engine will be cleaned up after the test has finished.
+func RunDatastoreTestContainer(t testing.TB, engine string) DatastoreTestContainer {
 	switch engine {
-	case "memory":
-		require.Equal(t, "", bridgeNetworkName, "memory datastore does not support bridge networking")
-		return RunMemoryForTesting[T](t)
+	case "mysql":
+		return NewMySQLTestContainer().RunMySQLTestContainer(t)
 	case "postgres":
-		pgTester := NewPostgresTester[T]()
-		return pgTester.RunPostgresForTesting(t, bridgeNetworkName)
+		return NewPostgresTestContainer().RunPostgresTestContainer(t)
+	case "memory":
+		return memoryTestContainer{}
+	case "sqlite":
+		return NewSqliteTestContainer().RunSqliteTestDatabase(t)
 	default:
-		t.Fatalf("found missing engine for RunDatastoreEngine: %s", engine)
+		t.Fatalf("unsupported datastore engine: %q", engine)
 		return nil
 	}
-}
-
-// RunOpenFGADatastoreTestEngine runs a datastore test engine specifically for the OpenFGADatastore storage interface.
-func RunOpenFGADatastoreTestEngine(t testing.TB, engine string) RunningEngineForTest[storage.OpenFGADatastore] {
-	testEngine := NewDatastoreTestEngine[storage.OpenFGADatastore]()
-	return testEngine.RunDatastoreTestEngine(t, engine)
 }

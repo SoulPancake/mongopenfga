@@ -1,17 +1,22 @@
+# https://semgrep.dev/docs/semgrep-ci/sample-ci-configs/#sample-github-actions-configuration-file
 name: Semgrep
 on:
   push:
     branches:
       - main
+
+permissions:
+  contents: read
+
 jobs:
   semgrep:
     name: Scan
     runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep
-    if: (github.actor != 'dependabot[bot]' && github.actor != 'snyk-bot')
+    if: (github.repository_owner == 'openfga' && github.actor != 'dependabot[bot]' && github.actor != 'snyk-bot')
     steps:
-    - uses: actions/checkout@v3
-    - run: semgrep ci
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v3.5.2
+    - run: semgrep ci --no-suppress-errors
       env:
         SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
