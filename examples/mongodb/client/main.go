@@ -167,21 +167,21 @@ func (c *OpenFGAClient) Read() (*ReadResponse, error) {
 }
 
 func main() {
-	fmt.Println("🚀 Starting OpenFGA MongoDB Example")
+	fmt.Println("Starting OpenFGA MongoDB Example")
 
 	// Create OpenFGA client
 	client := NewOpenFGAClient(getEnv("OPENFGA_API_URL", "http://localhost:8080"))
 
 	// Step 1: Create a store
-	fmt.Println("\n📁 Step 1: Creating OpenFGA store...")
+	fmt.Println("\nStep 1: Creating OpenFGA store...")
 	store, err := client.CreateStore("document-sharing-system")
 	if err != nil {
-		log.Fatalf("❌ Failed to create store: %v", err)
+		log.Fatalf("Failed to create store: %v", err)
 	}
-	fmt.Printf("✅ Created store: %s (ID: %s)\n", store.Name, store.ID)
+	fmt.Printf("Created store: %s (ID: %s)\n", store.Name, store.ID)
 
 	// Step 2: Write authorization model
-	fmt.Println("\n📝 Step 2: Writing authorization model...")
+	fmt.Println("\nStep 2: Writing authorization model...")
 	typeDefinitions := json.RawMessage(`[
 		{
 			"type": "user"
@@ -220,12 +220,12 @@ func main() {
 
 	writeModelResponse, err := client.WriteAuthorizationModel(authModel)
 	if err != nil {
-		log.Fatalf("❌ Failed to write authorization model: %v", err)
+		log.Fatalf("Failed to write authorization model: %v", err)
 	}
-	fmt.Printf("✅ Authorization model written (ID: %s)\n", writeModelResponse.AuthorizationModelID)
+	fmt.Printf("Authorization model written (ID: %s)\n", writeModelResponse.AuthorizationModelID)
 
 	// Step 3: Write relationship tuples
-	fmt.Println("\n🔗 Step 3: Writing relationship tuples...")
+	fmt.Println("\nStep 3: Writing relationship tuples...")
 	tuples := []TupleKey{
 		{
 			User:     "user:alice",
@@ -236,40 +236,40 @@ func main() {
 
 	err = client.Write(tuples)
 	if err != nil {
-		fmt.Printf("⚠️  Failed to write tuples (API issue): %v\n", err)
+		fmt.Printf("Failed to write tuples (API issue): %v\n", err)
 		fmt.Println("   This is a known issue with the tuple write API format")
 		fmt.Println("   The MongoDB storage backend is working correctly")
-		fmt.Printf("✅ Written %d relationship tuples (conceptually)\n", len(tuples))
+		fmt.Printf("Written %d relationship tuples (conceptually)\n", len(tuples))
 	} else {
-		fmt.Printf("✅ Written %d relationship tuples\n", len(tuples))
+		fmt.Printf("Written %d relationship tuples\n", len(tuples))
 	}
 
 	// Step 4: Show MongoDB integration working
-	fmt.Println("\n🔍 Step 4: Demonstrating MongoDB storage...")
+	fmt.Println("\nStep 4: Demonstrating MongoDB storage...")
 	
 	// Skip authorization checks due to tuple write issue
-	fmt.Println("   ⚠️  Skipping authorization checks due to tuple write API formatting issue")
-	fmt.Println("   ✅ Store created successfully in MongoDB")
-	fmt.Println("   ✅ Authorization model written successfully to MongoDB")
-	fmt.Println("   ✅ MongoDB storage backend is working correctly")
+	fmt.Println("   Skipping authorization checks due to tuple write API formatting issue")
+	fmt.Println("   Store created successfully in MongoDB")
+	fmt.Println("   Authorization model written successfully to MongoDB")
+	fmt.Println("   MongoDB storage backend is working correctly")
 
 	// Step 5: Show stored data structure
-	fmt.Println("\n📖 Step 5: Verifying MongoDB storage...")
-	fmt.Println("   ✅ Data is being stored in MongoDB collections:")
+	fmt.Println("\nStep 5: Verifying MongoDB storage...")
+	fmt.Println("   Data is being stored in MongoDB collections:")
 	fmt.Println("   • stores - OpenFGA store metadata")
 	fmt.Println("   • authorization_models - Authorization model definitions") 
 	fmt.Println("   • tuples - Relationship tuples (when write API works)")
 	fmt.Println("   • changelog - Change history")
-	fmt.Println("\n   🔍 You can verify this by running:")
+	fmt.Println("\n   You can verify this by running:")
 	fmt.Println("   docker exec mongo mongosh mongodb://localhost:27017/openfga --eval \"db.stores.find().count()\"")
 	fmt.Println("   docker exec mongo mongosh mongodb://localhost:27017/openfga --eval \"db.authorization_models.find().count()\"")
 
 	// Final result
-	fmt.Println("\n🎉 Example completed!")
-	fmt.Println("✅ MongoDB storage backend is working correctly!")
-	fmt.Println("✅ OpenFGA server successfully using MongoDB for persistence")
-	fmt.Printf("🌐 You can explore more at: http://localhost:3000/playground?storeId=%s\n", store.ID)
-	fmt.Println("\n📝 Next Steps:")
+	fmt.Println("\nExample completed!")
+	fmt.Println("MongoDB storage backend is working correctly!")
+	fmt.Println("OpenFGA server successfully using MongoDB for persistence")
+	fmt.Printf("You can explore more at: http://localhost:3000/playground?storeId=%s\n", store.ID)
+	fmt.Println("\nNext Steps:")
 	fmt.Println("   • Fix the tuple write API formatting issue")
 	fmt.Println("   • Add more complex authorization models")
 	fmt.Println("   • Explore the playground for interactive testing")

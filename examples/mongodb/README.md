@@ -22,11 +22,11 @@ This example demonstrates how to use OpenFGA with MongoDB as the storage backend
 ## What This Example Does
 
 The example client program:
-1. ✅ Creates an OpenFGA store 
-2. ✅ Writes an authorization model for a simple document sharing system
-3. ⚠️ Attempts to write relationship tuples (API formatting issue)
-4. ✅ Demonstrates MongoDB storage integration
-5. ✅ Validates that data is persisted in MongoDB
+1. Creates an OpenFGA store 
+2. Writes an authorization model for a simple document sharing system
+3. Attempts to write relationship tuples (API formatting issue)
+4. Demonstrates MongoDB storage integration
+5. Validates that data is persisted in MongoDB
 
 ## Architecture
 
